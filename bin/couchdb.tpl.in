@@ -267,10 +267,8 @@ EOF
 
 stop_couchdb () {
     PID=`_get_pid`
+    rm -f $PID_FILE
     if test -n "$PID"; then
-        if test "$1" = "false"; then
-            echo > $PID_FILE
-        fi
         if kill -0 $PID 2> /dev/null; then
             if kill -1 $PID 2> /dev/null; then
                 if test "$1" = "false"; then
