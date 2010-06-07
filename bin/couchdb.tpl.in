@@ -305,6 +305,7 @@ EOF
 
 stop_couchdb () {
     PID=`_get_pid`
+    rm -f $PID_FILE
     STOP_TIMEOUT=60
     if test -n "$PID"; then
         if test "$1" = "false"; then
