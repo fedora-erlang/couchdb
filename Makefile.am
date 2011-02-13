@@ -15,18 +15,15 @@ SUBDIRS = bin etc src share test var utils
 ACLOCAL_AMFLAGS = -I m4
 
 localdoc_DATA = \
-    AUTHORS.gz \
-    BUGS.gz \
-    CHANGES.gz \
-    DEVELOPERS.gz \
-    INSTALL.gz \
-    INSTALL.Unix.gz \
-    INSTALL.Windows.gz \
-    LICENSE.gz \
-    NEWS.gz \
-    NOTICE.gz \
-    README.gz \
-    THANKS.gz
+    AUTHORS \
+    BUGS \
+    CHANGES \
+    DEVELOPERS \
+    LICENSE \
+    NEWS \
+    NOTICE \
+    README \
+    THANKS
 
 DISTCLEANFILES = $(localdoc_DATA)
 
@@ -44,42 +41,6 @@ EXTRA_DIST = \
     README \
     THANKS \
     license.skip
-
-AUTHORS.gz: $(top_srcdir)/AUTHORS
-	-gzip -9 < $< > $@
-
-BUGS.gz: $(top_srcdir)/BUGS
-	-gzip -9 < $< > $@
-
-CHANGES.gz: $(top_srcdir)/CHANGES
-	-gzip -9 < $< > $@
-
-DEVELOPERS.gz: $(top_srcdir)/DEVELOPERS
-	-gzip -9 < $< > $@
-
-INSTALL.gz: $(top_srcdir)/INSTALL
-	-gzip -9 < $< > $@
-
-INSTALL.Unix.gz: $(top_srcdir)/INSTALL.Unix
-	-gzip -9 < $< > $@
-
-INSTALL.Windows.gz: $(top_srcdir)/INSTALL.Windows
-	-gzip -9 < $< > $@
-
-LICENSE.gz: $(top_srcdir)/LICENSE
-	-gzip -9 < $< > $@
-
-NEWS.gz: $(top_srcdir)/NEWS
-	-gzip -9 < $< > $@
-
-NOTICE.gz: $(top_srcdir)/NOTICE
-	-gzip -9 < $< > $@
-
-README.gz: $(top_srcdir)/README
-	-gzip -9 < $< > $@
-
-THANKS.gz: $(top_srcdir)/THANKS
-	-gzip -9 < $< > $@
 
 check: dev
 	$(top_builddir)/test/etap/run
