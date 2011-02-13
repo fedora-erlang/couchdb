@@ -526,17 +526,23 @@ launchd_enabled=false
 
 if test "$use_init" = "yes"; then
    AC_MSG_CHECKING(location of init directory)
-   if test -d /etc/rc.d; then
+   if test -d /etc/rc.d/init.d; then
        init_enabled=true
-       AC_SUBST([initdir], ['${sysconfdir}/rc.d'])
+       AC_SUBST([initdir], ['${sysconfdir}/rc.d/init.d'])
        AC_MSG_RESULT(${initdir})
    else
-       if test -d /etc/init.d; then
+       if test -d /etc/rc.d; then
            init_enabled=true
-           AC_SUBST([initdir], ['${sysconfdir}/init.d'])
+           AC_SUBST([initdir], ['${sysconfdir}/rc.d'])
            AC_MSG_RESULT(${initdir})
        else
-           AC_MSG_RESULT(not found)
+           if test -d /etc/init.d; then
+              init_enabled=true
+              AC_SUBST([initdir], ['${sysconfdir}/init.d'])
+              AC_MSG_RESULT(${initdir})
+           else
+              AC_MSG_RESULT(not found)
+           fi
        fi
     fi
 fi
