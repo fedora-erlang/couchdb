@@ -551,7 +551,7 @@ AC_SUBST([bug_uri], ["LOCAL_BUG_URI"])
 
 AC_SUBST([localconfdir], [${sysconfdir}/${package_identifier}])
 AC_SUBST([localdatadir], [${datadir}/${package_identifier}])
-AC_SUBST([localdocdir], [${datadir}/doc/${package_identifier}])
+AC_SUBST([localdocdir], [${datadir}/doc/${package_identifier}-${version}])
 AC_SUBST([locallibdir], [${libdir}/${package_identifier}])
 AC_SUBST([localstatelibdir], [${localstatedir}/lib/${package_identifier}])
 AC_SUBST([localstatelogdir], [${localstatedir}/log/${package_identifier}])
