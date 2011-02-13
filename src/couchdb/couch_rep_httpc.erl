@@ -12,7 +12,7 @@
 
 -module(couch_rep_httpc).
 -include("couch_db.hrl").
--include("../ibrowse/ibrowse.hrl").
+-include_lib("ibrowse/include/ibrowse.hrl").
 
 -export([db_exists/1, db_exists/2]).
 -export([full_url/1, request/1, redirected_request/3]).

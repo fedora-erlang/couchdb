@@ -21,7 +21,7 @@
 -define(DOC_IDS_FILTER_NAME, "_doc_ids").
 
 -include("couch_db.hrl").
--include("../ibrowse/ibrowse.hrl").
+-include_lib("ibrowse/include/ibrowse.hrl").
 
 -record (state, {
     changes_from = nil,

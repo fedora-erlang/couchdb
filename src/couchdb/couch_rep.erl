@@ -22,7 +22,7 @@
 
 -include("couch_db.hrl").
 -include("couch_js_functions.hrl").
--include("../ibrowse/ibrowse.hrl").
+-include_lib("ibrowse/include/ibrowse.hrl").
 
 -define(REP_ID_VERSION, 2).
 
