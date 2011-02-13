@@ -15,16 +15,16 @@ SUBDIRS = bin etc src share test var utils
 ACLOCAL_AMFLAGS = -I m4
 
 localdoc_DATA = \
-    AUTHORS.gz \
-    BUGS.gz \
-    DEVELOPERS.gz \
-    INSTALL.gz \
-    INSTALL.Unix.gz \
-    INSTALL.Windows.gz \
-    LICENSE.gz \
-    NOTICE.gz \
-    README.gz \
-    THANKS.gz
+    AUTHORS \
+    BUGS \
+    DEVELOPERS \
+    INSTALL \
+    INSTALL.Unix \
+    INSTALL.Windows \
+    LICENSE \
+    NOTICE \
+    README \
+    THANKS
 
 DISTCLEANFILES = $(localdoc_DATA)
 
@@ -44,36 +44,6 @@ EXTRA_DIST = \
     build-aux/sphinx-touch \
     license.skip \
     Vagrantfile
-
-AUTHORS.gz: AUTHORS
-	gzip -9 < $< > $@
-
-BUGS.gz: BUGS
-	gzip -9 < $< > $@
-
-DEVELOPERS.gz: DEVELOPERS
-	gzip -9 < $< > $@
-
-INSTALL.gz: INSTALL
-	gzip -9 < $< > $@
-
-INSTALL.Unix.gz: INSTALL.Unix
-	gzip -9 < $< > $@
-
-INSTALL.Windows.gz: INSTALL.Windows
-	gzip -9 < $< > $@
-
-LICENSE.gz: LICENSE
-	gzip -9 < $< > $@
-
-NOTICE.gz: NOTICE
-	gzip -9 < $< > $@
-
-README.gz: README.rst
-	gzip -9 < $< > $@
-
-THANKS.gz: THANKS
-	gzip -9 < $< > $@
 
 check: dev check-js
 if TESTS
