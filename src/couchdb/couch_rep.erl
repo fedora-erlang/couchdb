@@ -18,7 +18,7 @@
 -export([replicate/2, checkpoint/1]).
 
 -include("couch_db.hrl").
--include("../ibrowse/ibrowse.hrl").
+-include_lib("ibrowse/include/ibrowse.hrl").
 
 -record(state, {
     changes_feed,
