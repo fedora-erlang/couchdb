@@ -377,7 +377,6 @@ CURL*       HTTP_HANDLE = NULL;
 char        ERRBUF[CURL_ERROR_SIZE];
 
 static size_t send_body(void *ptr, size_t size, size_t nmem, void *data);
-static int seek_body(void *ptr, curl_off_t offset, int origin);
 static size_t recv_body(void *ptr, size_t size, size_t nmem, void *data);
 static size_t recv_header(void *ptr, size_t size, size_t nmem, void *data);
 
@@ -404,8 +403,6 @@ go(JSContext* cx, JSObject* obj, HTTPData* http, char* body, size_t bodylen)
     {
         HTTP_HANDLE = curl_easy_init();
         curl_easy_setopt(HTTP_HANDLE, CURLOPT_READFUNCTION, send_body);
-        curl_easy_setopt(HTTP_HANDLE, CURLOPT_SEEKFUNCTION,
-                                        (curl_seek_callback) seek_body);
         curl_easy_setopt(HTTP_HANDLE, CURLOPT_HEADERFUNCTION, recv_header);
         curl_easy_setopt(HTTP_HANDLE, CURLOPT_WRITEFUNCTION, recv_body);
         curl_easy_setopt(HTTP_HANDLE, CURLOPT_NOPROGRESS, 1);
@@ -458,7 +455,6 @@ go(JSContext* cx, JSObject* obj, HTTPData* http, char* body, size_t bodylen)
     curl_easy_setopt(HTTP_HANDLE, CURLOPT_URL, http->url);
     curl_easy_setopt(HTTP_HANDLE, CURLOPT_HTTPHEADER, http->req_headers);
     curl_easy_setopt(HTTP_HANDLE, CURLOPT_READDATA, &state);
-    curl_easy_setopt(HTTP_HANDLE, CURLOPT_SEEKDATA, &state);
     curl_easy_setopt(HTTP_HANDLE, CURLOPT_WRITEHEADER, &state);
     curl_easy_setopt(HTTP_HANDLE, CURLOPT_WRITEDATA, &state);
 
@@ -553,16 +549,6 @@ send_body(void *ptr, size_t size, size_t nmem, void *data)
     state->sent += towrite;
 
     return towrite;
-}
-
-static int
-seek_body(void* ptr, curl_off_t offset, int origin)
-{
-    CurlState* state = (CurlState*) ptr;
-    if(origin != SEEK_SET) return -1;
-
-    state->sent = (size_t) offset;
-    return (int) state->sent;
 }
 
 static size_t
