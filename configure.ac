@@ -363,7 +363,7 @@ AC_SUBST([bug_uri], ["LOCAL_BUG_URI"])
 AC_SUBST([localconfdir], [${sysconfdir}/${package_identifier}])
 AC_SUBST([localdatadir], [${datadir}/${package_identifier}])
 AC_SUBST([localdocdir], [${datadir}/doc/${package_identifier}-${version}])
-AC_SUBST([locallibdir], [${libdir}/${package_identifier}])
+AC_SUBST([locallibdir], [${libdir}])
 AC_SUBST([localstatelibdir], [${localstatedir}/lib/${package_identifier}])
 AC_SUBST([localstatelogdir], [${localstatedir}/log/${package_identifier}])
 AC_SUBST([localstaterundir], [${localstatedir}/run/${package_identifier}])
@@ -373,7 +373,7 @@ if test x${IS_WINDOWS} = xTRUE; then
     AC_SUBST([locallibbindir], [${prefix}/bin])
     AC_SUBST([localerlanglibdir], [${libdir}])
 else
-    AC_SUBST([locallibbindir], [${locallibdir}/bin])
+    AC_SUBST([locallibbindir], [${locallibdir}/erlang/lib/couch-${version}/priv])
     AC_SUBST([localerlanglibdir], [${locallibdir}/erlang/lib])
 fi
 
