@@ -324,6 +324,13 @@ start_replication_server(Replicator) ->
                 supervisor:start_child(couch_rep_sup, Replicator),
             ?LOG_DEBUG("replication ~p already running at ~p", [RepId, Pid]),
             Pid;
+        {error, {'EXIT', {badarg,
+            [{erlang, apply, [gen_server, start_link, undefined]} | _]}}} ->
+            % Clause to deal with a change in the supervisor module introduced
+            % in R14B02. For more details consult the thread at:
+            %     http://erlang.org/pipermail/erlang-bugs/2011-March/002273.html
+            _ = supervisor:delete_child(couch_rep_sup, RepId),
+            start_replication_server(Replicator);
         {error, {db_not_found, DbUrl}} ->
             throw({db_not_found, <<"could not open ", DbUrl/binary>>});
         {error, {unauthorized, DbUrl}} ->
