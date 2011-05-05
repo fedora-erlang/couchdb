@@ -15,7 +15,6 @@
 #include <string.h>
 #include <jsapi.h>
 #include "config.h"
-
 #include "utf8.h"
 #include "http.h"
 
@@ -33,8 +32,22 @@ int gExitCode = 0;
 #define FINISH_REQUEST(cx)
 #endif
 
+static JSClass global_class = {
+    "GlobalClass",
+    JSCLASS_GLOBAL_FLAGS | JSCLASS_HAS_PRIVATE,
+    JS_PropertyStub,
+    JS_PropertyStub,
+    JS_PropertyStub,
+    JS_StrictPropertyStub,
+    JS_EnumerateStub,
+    JS_ResolveStub,
+    JS_ConvertStub,
+    JS_FinalizeStub,
+    JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
 static JSBool
-evalcx(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+evalcx(JSContext *cx, uintN argc, jsval *vp)
 {
     JSString *str;
     JSObject *sandbox;
@@ -45,10 +58,11 @@ evalcx(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
     jsval v;
 
     sandbox = NULL;
-    if(!JS_ConvertArguments(cx, argc, argv, "S / o", &str, &sandbox))
+    if(!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "S / o", &str, &sandbox))
     {
         return JS_FALSE;
     }
+
 
     subcx = JS_NewContext(JS_GetRuntime(cx), 8L * 1024L);
     if(!subcx)
@@ -57,24 +71,30 @@ evalcx(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
         return JS_FALSE;
     }
 
+    JSObject *global = JS_NewCompartmentAndGlobalObject(cx, &global_class, NULL);
+    if (!global) return 1;
+    JS_SetGlobalObject(subcx, global);
+
     SETUP_REQUEST(subcx);
 
-    src = JS_GetStringChars(str);
+    src = JS_GetStringCharsZ(cx, str);
     srclen = JS_GetStringLength(str);
 
     if(!sandbox)
     {
         sandbox = JS_NewObject(subcx, NULL, NULL, NULL);
-        if(!sandbox || !JS_InitStandardClasses(subcx, sandbox)) goto done;
+        if(!sandbox || !JS_InitStandardClasses(subcx, global)) goto done;
     }
 
     if(srclen == 0)
     {
-        *rval = OBJECT_TO_JSVAL(sandbox);
+        JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(sandbox));
     }
     else
     {
-        JS_EvaluateUCScript(subcx, sandbox, src, srclen, NULL, 0, rval);
+        jsval rval; 
+        JS_EvaluateUCScript(subcx, sandbox, src, srclen, NULL, 0, &rval);
+        JS_SET_RVAL(cx, vp, rval);
     }
     
     ret = JS_TRUE;
@@ -86,21 +106,20 @@ done:
 }
 
 static JSBool
-gc(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+gc(JSContext *cx, uintN argc, jsval *argv)
 {
     JS_GC(cx);
     return JS_TRUE;
 }
 
 static JSBool
-print(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+print(JSContext *cx, uintN argc, jsval *argv)
 {
     uintN i;
     char *bytes;
-
     for(i = 0; i < argc; i++)
     {
-        bytes = enc_string(cx, argv[i], NULL);
+        bytes = enc_string(cx, JS_ARGV(cx, argv)[i], NULL);
         if(!bytes) return JS_FALSE;
 
         fprintf(stdout, "%s%s", i ? " " : "", bytes);
@@ -113,9 +132,9 @@ print(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 }
 
 static JSBool
-quit(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+quit(JSContext *cx, uintN argc, jsval *argv)
 {
-    JS_ConvertArguments(cx, argc, argv, "/ i", &gExitCode);
+    JS_ConvertArguments(cx, argc, JS_ARGV(cx, argv), "/ i", &gExitCode);
     return JS_FALSE;
 }
 
@@ -123,41 +142,23 @@ static char*
 readfp(JSContext* cx, FILE* fp, size_t* buflen)
 {
     char* bytes = NULL;
-    char* tmp = NULL;
-    size_t used = 0;
     size_t byteslen = 256;
-    size_t readlen = 0;
+    ssize_t readlen;
 
     bytes = JS_malloc(cx, byteslen);
-    if(bytes == NULL) return NULL;
-    
-    while((readlen = js_fgets(bytes+used, byteslen-used, stdin)) > 0)
-    {
-        used += readlen;
-
-        if(bytes[used-1] == '\n')
-        {
-            bytes[used-1] = '\0';
-            break;
-        }
-
-        // Double our buffer and read more.
-        byteslen *= 2;
-        tmp = JS_realloc(cx, bytes, byteslen);
-        if(!tmp)
-        {
-            JS_free(cx, bytes);
-            return NULL;
-        }
-        bytes = tmp;
+    readlen = getline(&bytes, &byteslen, fp);
+    if (readlen <= 0) {
+       *buflen = 0;
+       return bytes;
     }
-
-    *buflen = used;
+    if (bytes[readlen-1] == '\n')
+       bytes[readlen-1] = '\0';
+    *buflen = readlen;
     return bytes;
 }
 
 static JSBool
-readline(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+readline(JSContext *cx, uintN argc, jsval *argv) {
     jschar *chars;
     JSString *str;
     char* bytes;
@@ -173,7 +174,7 @@ readline(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
     /* Treat the empty string specially */
     if(byteslen == 0)
     {
-        *rval = JS_GetEmptyStringValue(cx);
+        JS_SET_RVAL(cx, argv, JS_GetEmptyStringValue(cx));
         JS_free(cx, bytes);
         return JS_TRUE;
     }
@@ -191,28 +192,27 @@ readline(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
     JS_free(cx, bytes);
 
     if(!str) return JS_FALSE;
-
-    *rval = STRING_TO_JSVAL(str);
+    JS_SET_RVAL(cx, argv, STRING_TO_JSVAL(str));
 
     return JS_TRUE;
 }
 
 static JSBool
-seal(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval) {
+seal(JSContext *cx, uintN argc, jsval *argv) {
     JSObject *target;
     JSBool deep = JS_FALSE;
 
-    if (!JS_ConvertArguments(cx, argc, argv, "o/b", &target, &deep))
+    if (!JS_ConvertArguments(cx, argc, JS_ARGV(cx, argv), "o/b", &target, &deep))
         return JS_FALSE;
     if (!target)
         return JS_TRUE;
-    return JS_SealObject(cx, target, deep);
+    return JS_FreezeObject(cx, target);
 }
 
 static void
 execute_script(JSContext *cx, JSObject *obj, const char *filename) {
     FILE *file;
-    JSScript *script;
+    JSObject *script;
     jsval result;
 
     if(!filename || strcmp(filename, "-") == 0)
@@ -234,7 +234,6 @@ execute_script(JSContext *cx, JSObject *obj, const char *filename) {
     if(script)
     {
         JS_ExecuteScript(cx, obj, script, &result);
-        JS_DestroyScript(cx, script);
     }
 }
 
@@ -248,27 +247,13 @@ printerror(JSContext *cx, const char *mesg, JSErrorReport *report)
 }
 
 static JSFunctionSpec global_functions[] = {
-    {"evalcx", evalcx, 0, 0, 0},
-    {"gc", gc, 0, 0, 0},
-    {"print", print, 0, 0, 0},
-    {"quit", quit, 0, 0, 0},
-    {"readline", readline, 0, 0, 0},
-    {"seal", seal, 0, 0, 0},
-    {0, 0, 0, 0, 0}
-};
-
-static JSClass global_class = {
-    "GlobalClass",
-    JSCLASS_GLOBAL_FLAGS,
-    JS_PropertyStub,
-    JS_PropertyStub,
-    JS_PropertyStub,
-    JS_PropertyStub,
-    JS_EnumerateStub,
-    JS_ResolveStub,
-    JS_ConvertStub,
-    JS_FinalizeStub,
-    JSCLASS_NO_OPTIONAL_MEMBERS
+    {"evalcx", evalcx, 0, 0},
+    {"gc", gc, 0, 0},
+    {"print", print, 0, 0},
+    {"quit", quit, 0, 0},
+    {"readline", readline, 0, 0},
+    {"seal", seal, 0, 0},
+    {0, 0, 0, 0}
 };
 
 int
@@ -291,7 +276,7 @@ main(int argc, const char * argv[])
     
     SETUP_REQUEST(cx);
 
-    global = JS_NewObject(cx, &global_class, NULL, NULL);
+    global = JS_NewCompartmentAndGlobalObject(cx, &global_class, NULL);
     if (!global) return 1;
     if (!JS_InitStandardClasses(cx, global)) return 1;
     

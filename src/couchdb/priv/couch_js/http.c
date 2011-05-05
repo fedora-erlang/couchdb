@@ -49,12 +49,25 @@ go(JSContext* cx, JSObject* obj, HTTPData* http, char* body, size_t blen);
 static JSString*
 str_from_binary(JSContext* cx, char* data, size_t length);
 
+JSClass CouchHTTPClass;
+
 static JSBool
-constructor(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+constructor(JSContext* cx, uintN argc, jsval* vp)
 {
     HTTPData* http = NULL;
     JSBool ret = JS_FALSE;
+    jsval* argv = JS_ARGV(cx, vp);
+    JSObject *obj = NULL;
+    //if (JS_IsConstructing(cx, vp)) {
+       obj = JS_NewObject(cx, &CouchHTTPClass, NULL, NULL);
+       if (!obj)
+          return JS_FALSE;
+    //} else {
+    //   obj = JS_THIS_OBJECT(cx, vp);
+    //}
+    //printf("con %x\n", obj);
 
+    JSBool *con = JS_IsConstructing(cx, vp);
     http = (HTTPData*) malloc(sizeof(HTTPData));
     if(!http)
     {
@@ -67,6 +80,7 @@ constructor(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
     http->req_headers = NULL;
     http->last_status = -1;
 
+    JS_SET_RVAL(cx, vp, OBJECT_TO_JSVAL(obj));
     if(!JS_SetPrivate(cx, obj, http))
     {
         JS_ReportError(cx, "Failed to set private CouchHTTP data.");
@@ -90,6 +104,7 @@ destructor(JSContext* cx, JSObject* obj)
     if(!http)
     {
         fprintf(stderr, "Unable to destroy invalid CouchHTTP instance.\n");
+        //printf("Unable to destroy invalid CouchHTTP instance.\n");
     }
     else
     {
@@ -100,12 +115,15 @@ destructor(JSContext* cx, JSObject* obj)
 }
 
 static JSBool
-open(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
-{    
-    HTTPData* http = (HTTPData*) JS_GetPrivate(cx, obj);
+open(JSContext* cx, uintN argc, jsval* vp)
+{   
+    JSObject *obj = JS_THIS_OBJECT(cx, vp);
+    //printf("open %x\n", obj);
+    HTTPData* http = (HTTPData*) JS_GetPrivate(cx, JS_THIS_OBJECT(cx, vp));
     char* method = NULL;
     char* url = NULL;
     JSBool ret = JS_FALSE;
+    jsval* argv = JS_ARGV(cx, vp);
     int methid;
 
     if(!http)
@@ -182,14 +200,16 @@ done:
 }
 
 static JSBool
-setheader(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+setheader(JSContext* cx, uintN argc, jsval* vp)
 {    
-    HTTPData* http = (HTTPData*) JS_GetPrivate(cx, obj);
+    //printf("setheader %x\n", JS_THIS_OBJECT(cx, vp));
+    HTTPData* http = (HTTPData*) JS_GetPrivate(cx, JS_THIS_OBJECT(cx, vp));
     char* keystr = NULL;
     char* valstr = NULL;
     char* hdrbuf = NULL;
     size_t hdrlen = -1;
     JSBool ret = JS_FALSE;
+    jsval* argv = JS_ARGV(cx, vp);
 
     if(!http)
     {
@@ -245,12 +265,14 @@ done:
 }
 
 static JSBool
-sendreq(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
+sendreq(JSContext* cx, uintN argc, jsval* vp)
 {
-    HTTPData* http = (HTTPData*) JS_GetPrivate(cx, obj);
+    HTTPData* http = (HTTPData*) JS_GetPrivate(cx, JS_THIS_OBJECT(cx, vp));
+    //printf("sendreq %x\n", JS_THIS_OBJECT(cx, vp));
     char* body = NULL;
     size_t bodylen = 0;
     JSBool ret = JS_FALSE;
+    jsval* argv = JS_ARGV(cx, vp);
     
     if(!http)
     {
@@ -268,7 +290,7 @@ sendreq(JSContext* cx, JSObject* obj, uintN argc, jsval* argv, jsval* rval)
         }
     }
 
-    ret = go(cx, obj, http, body, bodylen);
+    ret = go(cx, JS_THIS_OBJECT(cx, argv), http, body, bodylen);
 
 done:
     if(body) free(body);
@@ -276,7 +298,7 @@ done:
 }
 
 static JSBool
-status(JSContext* cx, JSObject* obj, jsval idval, jsval* vp)
+status(JSContext* cx, JSObject* obj, jsid idval, jsval* vp)
 {
     HTTPData* http = (HTTPData*) JS_GetPrivate(cx, obj);
     
@@ -286,16 +308,8 @@ status(JSContext* cx, JSObject* obj, jsval idval, jsval* vp)
         return JS_FALSE;
     }
     
-    if(INT_FITS_IN_JSVAL(http->last_status))
-    {
-        *vp = INT_TO_JSVAL(http->last_status);
-        return JS_TRUE;
-    }
-    else
-    {
-        JS_ReportError(cx, "INTERNAL: Invalid last_status");
-        return JS_FALSE;
-    }
+    *vp = INT_TO_JSVAL(http->last_status);
+    return JS_TRUE;
 }
 
 JSClass CouchHTTPClass = {
@@ -306,7 +320,7 @@ JSClass CouchHTTPClass = {
     JS_PropertyStub,
     JS_PropertyStub,
     JS_PropertyStub,
-    JS_PropertyStub,
+    JS_StrictPropertyStub,
     JS_EnumerateStub,
     JS_ResolveStub,
     JS_ConvertStub,
@@ -320,10 +334,10 @@ JSPropertySpec CouchHTTPProperties[] = {
 };
 
 JSFunctionSpec CouchHTTPFunctions[] = {
-    {"_open", open, 3, 0, 0},
-    {"_setRequestHeader", setheader, 2, 0, 0},
-    {"_send", sendreq, 1, 0, 0},
-    {0, 0, 0, 0, 0}
+    {"_open", open, 3, 0},
+    {"_setRequestHeader", setheader, 2, 0},
+    {"_send", sendreq, 1, 0},
+    {0, 0, 0, 0}
 };
 
 JSObject*

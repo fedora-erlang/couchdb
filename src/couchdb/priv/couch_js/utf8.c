@@ -129,7 +129,7 @@ enc_string(JSContext* cx, jsval arg, size_t* buflen)
     str = JS_ValueToString(cx, arg);
     if(!str) goto error;
 
-    src = JS_GetStringChars(str);
+    src = JS_GetStringCharsZ(cx, str);
     srclen = JS_GetStringLength(str);
 
     if(!enc_charbuf(src, srclen, NULL, &byteslen)) goto error;
