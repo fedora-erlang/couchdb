@@ -16,8 +16,4 @@ SUBDIRS = \
     couch_replicator \
     couchdb \
     ejson \
-    erlang-oauth \
-    etap \
-    ibrowse \
-    mochiweb \
-    snappy
+    etap

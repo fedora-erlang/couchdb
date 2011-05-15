@@ -25,13 +25,9 @@ builddir() ->
 
 init_code_path() ->
     Paths = [
-        "etap",
+	"etap",
         "couchdb",
-        "ejson",
-        "erlang-oauth",
-        "ibrowse",
-        "mochiweb",
-        "snappy"
+        "ejson"
     ],
     lists:foreach(fun(Name) ->
         code:add_patha(filename:join([builddir(), "src", Name]))
