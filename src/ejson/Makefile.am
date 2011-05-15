@@ -44,15 +44,11 @@ EJSON_C_HDRS = \
 
 ejson_file_collection = \
     ejson.app.in \
-    ejson.erl \
-    mochijson2.erl \
-    mochinum.erl
+    ejson.erl
 
 ejsonebin_make_generated_file_list = \
     ejson.app \
-    ejson.beam \
-    mochijson2.beam \
-    mochinum.beam
+    ejson.beam
 
 EXTRA_DIST = \
 	$(EJSON_C_HDRS) \
