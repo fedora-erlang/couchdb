@@ -17,12 +17,6 @@ SUBDIRS = \
     couch_plugins \
     couch_replicator \
     couchdb \
-    ejson \
-    erlang-oauth \
-    etap \
-    ibrowse \
-    mochiweb \
-    snappy \
     couchjs-node
 
 EXTRA_DIST = \
