@@ -123,8 +123,8 @@ config_http(Url) ->
 redirect_url(RespHeaders, OrigUrl) ->
     MochiHeaders = mochiweb_headers:make(RespHeaders),
     RedUrl = mochiweb_headers:get_value("Location", MochiHeaders),
-    {url, _, Base, Port, _, _, Path, Proto} = ibrowse_lib:parse_url(RedUrl),
-    {url, _, _, _, User, Passwd, _, _} = ibrowse_lib:parse_url(OrigUrl),
+    {url, _, Base, Port, _, _, Path, Proto, _} = ibrowse_lib:parse_url(RedUrl),
+    {url, _, _, _, User, Passwd, _, _, _} = ibrowse_lib:parse_url(OrigUrl),
     Creds = case is_list(User) andalso is_list(Passwd) of
     true ->
         User ++ ":" ++ Passwd ++ "@";
