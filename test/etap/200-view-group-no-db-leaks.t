@@ -19,10 +19,8 @@
     handler
 }).
 
--define(LATEST_DISK_VERSION, 5).
-
 -record(db_header,
-    {disk_version = ?LATEST_DISK_VERSION,
+    {disk_version = 5,
      update_seq = 0,
      unused = 0,
      fulldocinfo_by_id_btree_state = nil,
