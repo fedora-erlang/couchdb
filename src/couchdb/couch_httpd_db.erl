@@ -816,7 +816,7 @@ receive_request_data(Req) ->
     receive_request_data(Req, couch_httpd:body_length(Req)).
 
 receive_request_data(Req, LenLeft) when LenLeft > 0 ->
-    Len = erlang:min(4096, LenLeft),
+    Len = erlang_min(4096, LenLeft),
     Data = couch_httpd:recv(Req, Len),
     {Data, fun() -> receive_request_data(Req, LenLeft - iolist_size(Data)) end};
 receive_request_data(_Req, _) ->
@@ -1239,3 +1239,9 @@ validate_attachment_name(Name) ->
         true -> Name;
         false -> throw({bad_request, <<"Attachment name is not UTF-8 encoded">>})
     end.
+
+erlang_min(A,B) ->
+	case (A < B) of
+		true -> A;
+		_ -> B
+end.
