@@ -125,13 +125,13 @@ test_all() ->
     couch_stats_collector:record(bar, 1.0),
     etap:is(
         couch_stats_collector:all(),
-        [{foo, 0}, {hoopla, 0}, {bar, [1.0, 0.0]}],
+        [{hoopla,0},{foo,0},{bar,[1.0,0.0]}],
         "all/0 returns all counters and absolute values."
     ),
     
     etap:is(
         couch_stats_collector:all(incremental),
-        [{foo, 0}, {hoopla, 0}],
+        [{hoopla,0},{foo,0}],
         "all/1 returns only the specified type."
     ),
     
