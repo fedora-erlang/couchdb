@@ -416,14 +416,6 @@ major_version=`echo $version | ${AWK} "{print \\$1}"`
 minor_version=`echo $version | ${AWK} "{print \\$2}"`
 patch_version=`echo $version | ${AWK} "{print \\$3}"`
 
-if test $major_version -ne 5; then
-    as_fn_error $? "$erlang_version_error" "$LINENO" 5
-fi
-
-if test $minor_version -lt 8 -o $minor_version -gt 10; then
-    as_fn_error $? "$erlang_version_error" "$LINENO" 5
-fi
-
 AC_MSG_RESULT(compatible)
 
 otp_release="`\
