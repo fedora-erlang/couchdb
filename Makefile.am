@@ -23,7 +23,7 @@ localdoc_DATA = \
     INSTALL.Windows \
     LICENSE \
     NOTICE \
-    README \
+    README.rst \
     THANKS
 
 DISTCLEANFILES = $(localdoc_DATA)
