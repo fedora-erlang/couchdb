@@ -22,7 +22,7 @@ localdoc_DATA = \
     LICENSE \
     NEWS \
     NOTICE \
-    README \
+    README.rst \
     THANKS
 
 DISTCLEANFILES = $(localdoc_DATA)
