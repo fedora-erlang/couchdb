@@ -23,8 +23,8 @@
 
 -define(REWRITE_COUNT, couch_rewrite_count).
 
--define(JSON_ENCODE(V), ejson:encode(V)).
--define(JSON_DECODE(V), ejson:decode(V)).
+-define(JSON_ENCODE(V), jiffy:encode(V, [force_utf8])).
+-define(JSON_DECODE(V), try jiffy:decode(V) catch throw:Error -> throw({invalid_json, Error}) end).
 
 -define(b2l(V), binary_to_list(V)).
 -define(l2b(V), list_to_binary(V)).
