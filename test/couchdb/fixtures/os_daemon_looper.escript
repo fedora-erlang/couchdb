@@ -1,5 +1,4 @@
-#!/usr/bin/env escript
-%% -*- erlang -*-
+#! /usr/bin/env escript
 
 % Licensed under the Apache License, Version 2.0 (the "License"); you may not
 % use this file except in compliance with the License. You may obtain a copy of
@@ -13,22 +12,15 @@
 % License for the specific language governing permissions and limitations under
 % the License.
 
-% Test that we can load each module.
+loop() ->
+    loop(io:read("")).
 
-main(_) ->
-    test_util:init_code_path(),
-    Modules = [
-        couch_mrview,
-        couch_mrview_compactor,
-        couch_mrview_http,
-        couch_mrview_index,
-        couch_mrview_updater,
-        couch_mrview_util
-    ],
+loop({ok, _}) ->
+    loop(io:read(""));
+loop(eof) ->
+    stop;
+loop({error, Reason}) ->
+    throw({error, Reason}).
 
-    etap:plan(length(Modules)),
-    lists:foreach(
-        fun(Module) ->
-            etap:loaded_ok(Module, lists:concat(["Loaded: ", Module]))
-        end, Modules),
-    etap:end_tests().
+main([]) ->
+    loop().

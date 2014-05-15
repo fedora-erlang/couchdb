@@ -18,7 +18,6 @@ SUBDIRS = \
     couch_replicator \
     couchdb \
     ejson \
-    etap \
     couchjs-node
 
 EXTRA_DIST = \
