@@ -15,7 +15,7 @@ noinst_DATA = test_util.beam test_web.beam
 
 noinst_PROGRAMS = test_cfg_register
 test_cfg_register_SOURCES = test_cfg_register.c
-test_cfg_register_CFLAGS = -D_BSD_SOURCE
+test_cfg_register_CFLAGS = -D_DEFAULT_SOURCE
 
 %.beam: %.erl
 	$(ERLC) $<
