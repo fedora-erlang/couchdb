@@ -204,7 +204,7 @@ terminate(_Arg, #state{fd = Fd}) ->
     file:close(Fd).
 
 log(#state{fd = Fd}, ConsoleMsg, FileMsg) ->
-    ok = io:put_chars(ConsoleMsg),
+    %ok = io:put_chars(ConsoleMsg),
     ok = io:put_chars(Fd, FileMsg).
 
 get_log_messages(Pid, Level, Format, Args) ->
