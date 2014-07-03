@@ -56,10 +56,12 @@ start_server(IniFiles) ->
     {ok, ConfigPid} = couch_config:start_link(IniFiles),
 
     LogLevel = couch_config:get("log", "level", "info"),
+    LogFileName = couch_config:get("log", "file"),
     % announce startup
-    io:format("Apache CouchDB ~s (LogLevel=~s) is starting.~n", [
+    io:format("Apache CouchDB ~s (LogLevel=~s) is logging to ~s.~n", [
         couch_server:get_version(),
-        LogLevel
+        LogLevel,
+        LogFileName
     ]),
     case LogLevel of
     "debug" ->
