@@ -120,7 +120,7 @@ _get_pid () {
     echo $PID
 }
 
-_add_config_file () {
+_add_config_path () {
     if test -z "$print_arguments"; then
         print_arguments="$1"
     else
@@ -134,14 +134,6 @@ EOF
     background_start_arguments="$background_start_arguments -a $1"
 }
 
-_add_config_dir () {
-    for file in "$1"/*.ini; do
-        if [ -r "$file" ]; then
-          _add_config_file "$file"
-        fi
-    done
-}
-
 _add_erlang_config () {
     if [ -r "$1" ]; then
         ERL_START_OPTIONS="$ERL_START_OPTIONS -config '$1'"
@@ -149,15 +141,15 @@ _add_erlang_config () {
 }
 
 _load_config () {
-    _add_config_file "$DEFAULT_CONFIG_FILE"
-    _add_config_dir "$DEFAULT_CONFIG_DIR"
+    _add_config_path "$DEFAULT_CONFIG_FILE"
+    _add_config_path "$DEFAULT_CONFIG_DIR"
     # We initialize plugins here to get the desired default config load order
     _find_plugins
-    _add_config_file "$LOCAL_CONFIG_FILE"
-    _add_config_dir "$LOCAL_CONFIG_DIR"
+    _add_config_path "$LOCAL_CONFIG_DIR"
+    _add_config_path "$LOCAL_CONFIG_FILE"
     if [ "$COUCHDB_ADDITIONAL_CONFIG_FILE" != '' ]
     then
-        _add_config_file "$COUCHDB_ADDITIONAL_CONFIG_FILE"
+        _add_config_path "$COUCHDB_ADDITIONAL_CONFIG_FILE"
     fi
 }
 
@@ -238,7 +230,7 @@ _find_plugins () {
                 else
                     ERL_ZFLAGS="$ERL_ZFLAGS -pz '$plugin/ebin'"
                 fi
-                _add_config_dir "$plugin/priv/default.d"
+                _add_config_path "$plugin/priv/default.d"
                 _add_erlang_config "$plugin/priv/couch_plugin.config"
             fi
         done
@@ -358,8 +350,8 @@ parse_script_option_list () {
         case "$1" in
             -h) shift; display_help; exit;;
             -V) shift; display_version; exit;;
-            -a) shift; _add_config_file "$1"; shift;;
-            -A) shift; _add_config_dir "$1"; shift;;
+            -a) shift; _add_config_path "$1"; shift;;
+            -A) shift; _add_config_path "$1"; shift;;
             -n) shift; _reset_config;;
             -c) shift; _print_config; exit;;
             -i) shift; INTERACTIVE=true;;
