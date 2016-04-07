@@ -69,7 +69,7 @@ terminate(_Reason, _State) ->
     ok.
 
 stop() ->
-    gen_server:cast(?SERVER, stop).
+    gen_server:call(?SERVER, stop).
 
 
 handle_call({check_request, Req}, _From, State) when is_function(State, 1) ->
@@ -95,11 +95,11 @@ handle_call({set_assert, Fun}, _From, nil) ->
     {reply, ok, Fun};
 handle_call({set_assert, _}, _From, State) ->
     {reply, {error, assert_function_set}, State};
+handle_call(stop, _From, State) ->
+    {stop, normal, State};
 handle_call(Msg, _From, State) ->
     {reply, {ignored, Msg}, State}.
 
-handle_cast(stop, State) ->
-    {stop, normal, State};
 handle_cast(Msg, State) ->
     ?debugFmt("Ignoring cast message: ~p", [Msg]),
     {noreply, State}.
