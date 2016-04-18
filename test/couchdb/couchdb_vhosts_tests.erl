@@ -157,7 +157,7 @@ should_return_database_info({Url, DbName}) ->
         ok = couch_config:set("vhosts", "example.com", "/" ++ DbName, false),
         case test_request:get(Url, [], [{host_header, "example.com"}]) of
             {ok, _, _, Body} ->
-                {JsonBody} = ejson:decode(Body),
+                {JsonBody} = ?JSON_DECODE(Body),
                 ?assert(proplists:is_defined(<<"db_name">>, JsonBody));
             Else ->
                 erlang:error({assertion_failed,
@@ -173,7 +173,7 @@ should_return_revs_info({Url, DbName}) ->
         case test_request:get(Url ++ "/doc1?revs_info=true", [],
                               [{host_header, "example.com"}]) of
             {ok, _, _, Body} ->
-                {JsonBody} = ejson:decode(Body),
+                {JsonBody} = ?JSON_DECODE(Body),
                 ?assert(proplists:is_defined(<<"_revs_info">>, JsonBody));
             Else ->
                 erlang:error({assertion_failed,
@@ -205,7 +205,7 @@ should_return_virtual_request_path_field_in_request({Url, DbName}) ->
                               false),
         case test_request:get(Url, [], [{host_header, "example1.com"}]) of
             {ok, _, _, Body} ->
-                {Json} = ejson:decode(Body),
+                {Json} = ?JSON_DECODE(Body),
                 ?assertEqual(<<"/">>,
                              proplists:get_value(<<"requested_path">>, Json));
             Else ->
@@ -223,7 +223,7 @@ should_return_real_request_path_field_in_request({Url, DbName}) ->
                               false),
         case test_request:get(Url, [], [{host_header, "example1.com"}]) of
             {ok, _, _, Body} ->
-                {Json} = ejson:decode(Body),
+                {Json} = ?JSON_DECODE(Body),
                 Path = ?l2b("/" ++ DbName ++ "/_design/doc1/_show/test"),
                 ?assertEqual(Path, proplists:get_value(<<"path">>, Json));
             Else ->
@@ -240,7 +240,7 @@ should_match_wildcard_vhost({Url, DbName}) ->
                               "/" ++ DbName ++ "/_design/doc1/_rewrite", false),
         case test_request:get(Url, [], [{host_header, "test.example.com"}]) of
             {ok, _, _, Body} ->
-                {Json} = ejson:decode(Body),
+                {Json} = ?JSON_DECODE(Body),
                 Path = ?l2b("/" ++ DbName ++ "/_design/doc1/_show/test"),
                 ?assertEqual(Path, proplists:get_value(<<"path">>, Json));
             Else ->
@@ -258,7 +258,7 @@ should_return_db_info_for_wildcard_vhost_for_custom_db({Url, DbName}) ->
         Host = DbName ++ ".example1.com",
         case test_request:get(Url, [], [{host_header, Host}]) of
             {ok, _, _, Body} ->
-                {JsonBody} = ejson:decode(Body),
+                {JsonBody} = ?JSON_DECODE(Body),
                 ?assert(proplists:is_defined(<<"db_name">>, JsonBody));
             Else ->
                 erlang:error({assertion_failed,
@@ -275,7 +275,7 @@ should_replace_rewrite_variables_for_db_and_doc({Url, DbName}) ->
         Host = "doc1." ++ DbName ++ ".example1.com",
         case test_request:get(Url, [], [{host_header, Host}]) of
             {ok, _, _, Body} ->
-                {Json} = ejson:decode(Body),
+                {Json} = ?JSON_DECODE(Body),
                 Path = ?l2b("/" ++ DbName ++ "/_design/doc1/_show/test"),
                 ?assertEqual(Path, proplists:get_value(<<"path">>, Json));
             Else ->
@@ -293,7 +293,7 @@ should_return_db_info_for_vhost_with_resource({Url, DbName}) ->
         ReqUrl = Url ++ "/test",
         case test_request:get(ReqUrl, [], [{host_header, "example.com"}]) of
             {ok, _, _, Body} ->
-                {JsonBody} = ejson:decode(Body),
+                {JsonBody} = ?JSON_DECODE(Body),
                 ?assert(proplists:is_defined(<<"db_name">>, JsonBody));
             Else ->
                 erlang:error({assertion_failed,
@@ -311,7 +311,7 @@ should_return_revs_info_for_vhost_with_resource({Url, DbName}) ->
         ReqUrl = Url ++ "/test/doc1?revs_info=true",
         case test_request:get(ReqUrl, [], [{host_header, "example.com"}]) of
             {ok, _, _, Body} ->
-                {JsonBody} = ejson:decode(Body),
+                {JsonBody} = ?JSON_DECODE(Body),
                 ?assert(proplists:is_defined(<<"_revs_info">>, JsonBody));
             Else ->
                 erlang:error({assertion_failed,
@@ -328,7 +328,7 @@ should_return_db_info_for_vhost_with_wildcard_resource({Url, DbName}) ->
         Host = DbName ++ ".example2.com",
         case test_request:get(ReqUrl, [], [{host_header, Host}]) of
             {ok, _, _, Body} ->
-                {JsonBody} = ejson:decode(Body),
+                {JsonBody} = ?JSON_DECODE(Body),
                 ?assert(proplists:is_defined(<<"db_name">>, JsonBody));
             Else ->
                 erlang:error({assertion_failed,
@@ -345,7 +345,7 @@ should_return_path_for_vhost_with_wildcard_host({Url, DbName}) ->
                               false),
         case test_request:get(Url ++ "/test1") of
             {ok, _, _, Body} ->
-                {Json} = ejson:decode(Body),
+                {Json} = ?JSON_DECODE(Body),
                 Path = ?l2b("/" ++ DbName ++ "/_design/doc1/_show/test"),
                 ?assertEqual(Path, proplists:get_value(<<"path">>, Json));
             Else ->
@@ -361,7 +361,7 @@ should_require_auth({Url, _}) ->
         case test_request:get(Url, [], [{host_header, "oauth-example.com"}]) of
             {ok, Code, _, Body} ->
                 ?assertEqual(401, Code),
-                {JsonBody} = ejson:decode(Body),
+                {JsonBody} = ?JSON_DECODE(Body),
                 ?assertEqual(<<"unauthorized">>,
                              couch_util:get_value(<<"error">>, JsonBody));
             Else ->
@@ -395,7 +395,7 @@ should_succeed_oauth({Url, _}) ->
         case test_request:get(OAuthUrl, [], [{host_header, Host}]) of
             {ok, Code, _, Body} ->
                 ?assertEqual(200, Code),
-                {JsonBody} = ejson:decode(Body),
+                {JsonBody} = ?JSON_DECODE(Body),
                 ?assertEqual(<<"test">>,
                              couch_util:get_value(<<"name">>, JsonBody));
             Else ->
@@ -429,7 +429,7 @@ should_fail_oauth_with_wrong_credentials({Url, _}) ->
         case test_request:get(OAuthUrl, [], [{host_header, Host}]) of
             {ok, Code, _, Body} ->
                 ?assertEqual(401, Code),
-                {JsonBody} = ejson:decode(Body),
+                {JsonBody} = ?JSON_DECODE(Body),
                 ?assertEqual(<<"unauthorized">>,
                              couch_util:get_value(<<"error">>, JsonBody));
             Else ->
