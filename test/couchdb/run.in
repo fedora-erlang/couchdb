@@ -99,12 +99,7 @@ run_tests(Mods, Options) ->
 
 init_code_path() ->
     Paths = [
-        "couchdb",
-        "ejson",
-        "erlang-oauth",
-        "ibrowse",
-        "mochiweb",
-        "snappy"
+        "couchdb"
     ],
     lists:foreach(fun(Name) ->
         code:add_patha(filename:join([?BUILDDIR, "src", Name]))
