@@ -1,6 +1,6 @@
 #! /usr/bin/env escript
 %% -*- erlang -*-
-%%! -DTEST -pa @abs_top_builddir@/src/ejson
+%%! -DTEST
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License"); you may not
 %% use this file except in compliance with the License. You may obtain a copy of
@@ -19,11 +19,11 @@ read() ->
         eof ->
             stop;
         Data ->
-            ejson:decode(Data)
+            try jiffy:decode(Data) catch throw:Error -> throw({invalid_json, Error}) end
     end.
 
 write(Mesg) ->
-    Data = iolist_to_binary(ejson:encode(Mesg)),
+    Data = iolist_to_binary(jiffy:encode(Mesg, [force_utf8])),
     io:format(binary_to_list(Data) ++ "\n", []).
 
 get_cfg(Section) ->
