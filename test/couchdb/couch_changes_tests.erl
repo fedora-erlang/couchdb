@@ -16,7 +16,7 @@
 -include_lib("couchdb/couch_db.hrl").
 
 -define(ADMIN_USER, {user_ctx, #user_ctx{roles = [<<"_admin">>]}}).
--define(TIMEOUT, 3000).
+-define(TIMEOUT, 6000).
 -define(TEST_TIMEOUT, 10000).
 
 -record(row, {

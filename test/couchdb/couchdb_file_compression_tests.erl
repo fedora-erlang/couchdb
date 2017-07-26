@@ -18,7 +18,7 @@
 -define(ADMIN_USER, {user_ctx, #user_ctx{roles=[<<"_admin">>]}}).
 -define(DDOC_ID, <<"_design/test">>).
 -define(DOCS_COUNT, 5000).
--define(TIMEOUT, 30000).
+-define(TIMEOUT, 60000).
 
 
 start() ->

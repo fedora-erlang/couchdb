@@ -19,6 +19,7 @@
 -define(ADMIN_USER, {user_ctx, #user_ctx{roles=[<<"_admin">>]}}).
 -define(DELAY, 100).
 -define(TIMEOUT, 1000).
+-define(WAIT_DELAY_COUNT, 40).
 
 
 start() ->
@@ -556,7 +557,7 @@ compact_db(DbName) ->
     {ok, Db} = couch_db:open_int(DbName, []),
     {ok, _} = couch_db:start_compact(Db),
     ok = couch_db:close(Db),
-    wait_db_compact_done(DbName, 10).
+    wait_db_compact_done(DbName, ?WAIT_DELAY_COUNT).
 
 wait_db_compact_done(_DbName, 0) ->
     erlang:error({assertion_failed,
