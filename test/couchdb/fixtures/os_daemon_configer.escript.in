@@ -19,7 +19,7 @@ read() ->
         eof ->
             stop;
         Data ->
-            try jiffy:decode(Data) catch throw:Error -> throw({invalid_json, Error}) end
+            try jiffy:decode(Data, [dedupe_keys]) catch throw:Error -> throw({invalid_json, Error}) end
     end.
 
 write(Mesg) ->
