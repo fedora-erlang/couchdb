@@ -151,7 +151,8 @@ attachments_compression_tests() ->
                 fun setup/0, fun teardown/1,
                 [
                     fun should_not_create_compressed_att_with_deflate_encoding/1,
-                    fun should_not_create_compressed_att_with_compress_encoding/1
+                    fun should_not_create_compressed_att_with_compress_encoding/1,
+                    fun should_create_compressible_att_with_ctype_params/1
                 ]
             }
         ]

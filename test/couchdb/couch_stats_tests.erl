@@ -74,6 +74,7 @@ couch_stats_collector_test_() ->
                 should_clear_absolute_values(),
                 should_track_process_count(),
                 should_increment_counter_multiple_times_per_pid(),
+                should_decrement_counter_on_process_exit(),
                 should_decrement_for_each_track_process_count_call_on_exit(),
                 should_return_all_counters_and_absolute_values(),
                 should_return_incremental_counters(),
