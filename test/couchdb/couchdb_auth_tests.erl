@@ -15,14 +15,21 @@
 -include("couch_eunit.hrl").
 -include_lib("couchdb/couch_db.hrl").
 
+-define(TIMEOUT, 1000).
 
 start() ->
-    couch_server_sup:start_link(?CONFIG_CHAIN),
-    ok.
+    {ok, Pid} = couch_server_sup:start_link(?CONFIG_CHAIN),
+    Pid.
 
-stop(_) ->
+stop(Pid) ->
+    erlang:monitor(process, Pid),
     couch_server_sup:stop(),
-    ok.
+    receive
+        {'DOWN', _, _, Pid, _} ->
+            ok
+    after ?TIMEOUT ->
+        throw({timeout, server_stop})
+    end.
 
 setup() ->
     Addr = couch_config:get("httpd", "bind_address", "127.0.0.1"),
