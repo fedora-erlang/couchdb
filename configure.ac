@@ -422,7 +422,7 @@ minor_version=`echo $version | ${AWK} "{print \\$2}"`
 patch_version=`echo $version | ${AWK} "{print \\$3}"`
 echo -n "detected Erlang version: $major_version.$minor_version.$patch_version..."
 
-if test $major_version -lt 5 -o $major_version -gt 9; then
+if test $major_version -lt 5 -o $major_version -gt 10; then
     as_fn_error $? "$erlang_version_error major_version does not match" "$LINENO" 5
 fi
 
