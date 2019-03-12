@@ -34,6 +34,14 @@
 -export([validate_bind_address/1]).
 -export([validate_host/1]).
 
+-ifdef(OTP_RELEASE). %% this implies 21 or higher
+-define(EXCEPTION(Class, Reason, Stacktrace), Class:Reason:Stacktrace).
+-define(GET_STACK(Stacktrace), Stacktrace).
+-else.
+-define(EXCEPTION(Class, Reason, _), Class:Reason).
+-define(GET_STACK(_), erlang:get_stacktrace()).
+-endif.
+
 start_link() ->
     start_link(http).
 start_link(http) ->
@@ -358,25 +366,21 @@ handle_request_int(MochiReq, DefaultFun,
             send_error(HttpReq, request_entity_too_large);
         exit:{uri_too_long, _} ->
             send_error(HttpReq, request_uri_too_long);
-        throw:Error ->
-            Stack = erlang:get_stacktrace(),
+        ?EXCEPTION(throw, Error, Stack) ->
             ?LOG_DEBUG("Minor error in HTTP request: ~p",[Error]),
-            ?LOG_DEBUG("Stacktrace: ~p",[Stack]),
+            ?LOG_DEBUG("Stacktrace: ~p",[?GET_STACK(Stack)]),
             send_error(HttpReq, Error);
-        error:badarg ->
-            Stack = erlang:get_stacktrace(),
+        ?EXCEPTION(error, badarg, Stack) ->
             ?LOG_ERROR("Badarg error in HTTP request",[]),
-            ?LOG_INFO("Stacktrace: ~p",[Stack]),
+            ?LOG_INFO("Stacktrace: ~p",[?GET_STACK(Stack)]),
             send_error(HttpReq, badarg);
-        error:function_clause ->
-            Stack = erlang:get_stacktrace(),
+        ?EXCEPTION(error, function_clause, Stack) ->
             ?LOG_ERROR("function_clause error in HTTP request",[]),
-            ?LOG_INFO("Stacktrace: ~p",[Stack]),
+            ?LOG_INFO("Stacktrace: ~p",[?GET_STACK(Stack)]),
             send_error(HttpReq, function_clause);
-        Tag:Error ->
-            Stack = erlang:get_stacktrace(),
+        ?EXCEPTION(Tag, Error, Stack) ->
             ?LOG_ERROR("Uncaught error in HTTP request: ~p",[{Tag, Error}]),
-            ?LOG_INFO("Stacktrace: ~p",[Stack]),
+            ?LOG_INFO("Stacktrace: ~p",[?GET_STACK(Stack)]),
             send_error(HttpReq, Error)
     end,
     RequestTime = round(timer:now_diff(erlang:timestamp(), Begin)/1000),
