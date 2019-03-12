@@ -467,7 +467,7 @@ recv_body(ReqId, Acc) ->
 %% Copy from couch test_util @ master branch
 
 now_us() ->
-    {MegaSecs, Secs, MicroSecs} = now(),
+    {MegaSecs, Secs, MicroSecs} = erlang:timestamp(),
     (MegaSecs * 1000000 + Secs) * 1000000 + MicroSecs.
 
 stop_sync(Name) ->

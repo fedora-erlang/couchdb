@@ -225,7 +225,7 @@ maybe_close_lru_db(#server{dbs_open=NumOpen, max_dbs_open=MaxOpen}=Server)
     {ok, Server};
 maybe_close_lru_db(#server{dbs_open=NumOpen}=Server) ->
     % must free up the lru db.
-    case try_close_lru(now()) of
+    case try_close_lru(erlang:timestamp()) of
     ok ->
         {ok, Server#server{dbs_open=NumOpen - 1}};
     Error -> Error
@@ -246,7 +246,7 @@ try_close_lru(StartTime) ->
         false ->
             % this still has referrers. Go ahead and give it a current lru time
             % and try the next one in the table.
-            NewLruTime = now(),
+            NewLruTime = erlang:timestamp(),
             true = ets:insert(couch_dbs_by_name, {DbName, {opened, MainPid, NewLruTime}}),
             true = ets:insert(couch_dbs_by_pid, {MainPid, DbName}),
             true = ets:delete(couch_dbs_by_lru, LruTime),
@@ -320,7 +320,7 @@ handle_call({open_result, DbName, {ok, OpenedDbPid}, Options}, _From, Server) ->
         gen_server:reply(From,
                 catch couch_db:open_ref_counted(OpenedDbPid, FromPid))
     end, Froms),
-    LruTime = now(),
+    LruTime = erlang:timestamp(),
     true = ets:insert(couch_dbs_by_name,
             {DbName, {opened, OpenedDbPid, LruTime}}),
     true = ets:delete(couch_dbs_by_pid, Opener),
@@ -351,7 +351,7 @@ handle_call({open_result, DbName, Error, Options}, _From, Server) ->
     end,
     {reply, ok, Server#server{dbs_open = DbsOpen}};
 handle_call({open, DbName, Options}, {FromPid,_}=From, Server) ->
-    LruTime = now(),
+    LruTime = erlang:timestamp(),
     case ets:lookup(couch_dbs_by_name, DbName) of
     [] ->
         open_db(DbName, Server, Options, From);
