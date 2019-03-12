@@ -65,6 +65,7 @@ level_atom(?LEVEL_DEBUG) -> debug.
 
 
 start_link() ->
+    error_logger:start(),
     couch_event_sup:start_link({local, couch_log}, error_logger, couch_log, []).
 
 stop() ->
