@@ -84,7 +84,7 @@ new_prefix() ->
     couch_util:to_hex((crypto:strong_rand_bytes(13))).
 
 inc() ->
-    crypto:rand_uniform(1, 16#ffe).
+    rand:uniform(16#fff).
 
 state() ->
     AlgoStr = couch_config:get("uuids", "algorithm", "random"),
