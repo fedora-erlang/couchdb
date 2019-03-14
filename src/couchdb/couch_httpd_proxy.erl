@@ -41,7 +41,7 @@ handle_proxy_req(Req, ProxyDest) ->
     
 
 get_method(#httpd{mochi_req=MochiReq}) ->
-    case MochiReq:get(method) of
+    case mochiweb_request:get(method, MochiReq) of
         Method when is_atom(Method) ->
             list_to_atom(string:to_lower(atom_to_list(Method)));
         Method when is_list(Method) ->
@@ -59,7 +59,7 @@ get_url(#httpd{mochi_req=MochiReq}=Req, ProxyDest) ->
         _ -> ProxyDest
     end,
     ProxyPrefix = "/" ++ ?b2l(hd(Req#httpd.path_parts)),
-    RequestedPath = MochiReq:get(raw_path),
+    RequestedPath = mochiweb_request:get(raw_path, MochiReq),
     case mochiweb_util:partition(RequestedPath, ProxyPrefix) of
         {[], ProxyPrefix, []} ->
             BaseUrl;
@@ -72,11 +72,11 @@ get_url(#httpd{mochi_req=MochiReq}=Req, ProxyDest) ->
     end.
 
 get_version(#httpd{mochi_req=MochiReq}) ->
-    MochiReq:get(version).
+    mochiweb_request:get(version, MochiReq).
 
 
 get_headers(#httpd{mochi_req=MochiReq}) ->
-    to_ibrowse_headers(mochiweb_headers:to_list(MochiReq:get(headers)), []).
+    to_ibrowse_headers(mochiweb_headers:to_list(mochiweb_request:get(headers, MochiReq)), []).
 
 to_ibrowse_headers([], Acc) ->
     lists:reverse(Acc);
@@ -100,7 +100,7 @@ get_body(#httpd{method='HEAD'}) ->
 get_body(#httpd{method='DELETE'}) ->
     fun() -> eof end;
 get_body(#httpd{mochi_req=MochiReq}) ->
-    case MochiReq:get(body_length) of
+    case mochiweb_request:get(body_length, MochiReq) of
         undefined ->
             <<>>;
         {unknown_transfer_encoding, Unknown} ->
@@ -159,7 +159,7 @@ stream_chunked_body({stream, MReq, CRem, Buf, BRem}) when BRem =< 0 ->
 stream_chunked_body({stream, MReq, CRem, Buf, BRem}) ->
     % Buffer some more data from the client.
     Length = lists:min([CRem, BRem]),
-    Socket = MReq:get(socket),
+    Socket = mochiweb_request:get(socket, MReq),
     NewState = case mochiweb_socket:recv(Socket, Length, ?TIMEOUT) of
         {ok, Data} when size(Data) == CRem ->
             case mochiweb_socket:recv(Socket, 2, ?TIMEOUT) of
@@ -181,7 +181,7 @@ stream_chunked_body({trailers, MReq, Buf, BRem}) when BRem =< 0 ->
 stream_chunked_body({trailers, MReq, Buf, BRem}) ->
     % Read another trailer into the buffer or stop on an
     % empty line.
-    Socket = MReq:get(socket),
+    Socket = mochiweb_request:get(socket, MReq),
     mochiweb_socket:setopts(Socket, [{packet, line}]),
     case mochiweb_socket:recv(Socket, 0, ?TIMEOUT) of
         {ok, <<"\r\n">>} ->
@@ -209,14 +209,14 @@ stream_length_body({stream, _MochiReq, 0}) ->
     eof;
 stream_length_body({stream, MochiReq, Length}) ->
     BufLen = lists:min([Length, ?PKT_SIZE]),
-    case MochiReq:recv(BufLen) of
+    case mochiweb_request:recv(BufLen, MochiReq) of
         <<>> -> eof;
         Bin -> {ok, Bin, {stream, MochiReq, Length-BufLen}}
     end.
 
 
 init_body_stream(MochiReq) ->
-    Expect = case MochiReq:get_header_value("expect") of
+    Expect = case mochiweb_request:get_header_value("expect", MochiReq) of
         undefined ->
             undefined;
         Value when is_list(Value) ->
@@ -224,14 +224,14 @@ init_body_stream(MochiReq) ->
     end,
     case Expect of
         "100-continue" ->
-            MochiReq:start_raw_response({100, gb_trees:empty()});
+            mochiweb_request:start_raw_response({100, gb_trees:empty()}, MochiReq);
         _Else ->
             ok
     end.
 
 
 read_chunk_length(MochiReq) ->
-    Socket = MochiReq:get(socket),
+    Socket = mochiweb_request:get(socket, MochiReq),
     mochiweb_socket:setopts(Socket, [{packet, line}]),
     case mochiweb_socket:recv(Socket, 0, ?TIMEOUT) of
         {ok, Header} ->

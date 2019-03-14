@@ -40,7 +40,7 @@ oauth_auth_callback(Req, #callback_params{token_secret = undefined}) ->
          Req, 400, <<"invalid_token">>, <<"Invalid OAuth token.">>);
 
 oauth_auth_callback(#httpd{mochi_req = MochiReq} = Req, CbParams) ->
-    Method = atom_to_list(MochiReq:get(method)),
+    Method = atom_to_list(mochiweb_request:get(method, MochiReq)),
     #callback_params{
         consumer = Consumer,
         token = Token,
@@ -180,7 +180,7 @@ serve_oauth(#httpd{mochi_req=MochiReq}=Req, Fun, FailSilently) ->
     % 1. In the HTTP Authorization header as defined in OAuth HTTP Authorization Scheme.
     % 2. As the HTTP POST request body with a content-type of application/x-www-form-urlencoded.
     % 3. Added to the URLs in the query part (as defined by [RFC3986] section 3).
-    AuthHeader = case MochiReq:get_header_value("authorization") of
+    AuthHeader = case mochiweb_request:get_header_value("authorization", MochiReq) of
         undefined ->
             "";
         Else ->
@@ -194,11 +194,11 @@ serve_oauth(#httpd{mochi_req=MochiReq}=Req, Fun, FailSilently) ->
     %Realm = couch_util:get_value("realm", HeaderParams),
 
     % get requested path
-    RequestedPath = case MochiReq:get_header_value("x-couchdb-requested-path") of
+    RequestedPath = case mochiweb_request:get_header_value("x-couchdb-requested-path", MochiReq) of
         undefined ->
-            case MochiReq:get_header_value("x-couchdb-vhost-path") of
+            case mochiweb_request:get_header_value("x-couchdb-vhost-path", MochiReq) of
                 undefined ->
-                    MochiReq:get(raw_path);
+                    mochiweb_request:get(raw_path, MochiReq);
                 VHostPath ->
                     VHostPath
             end;
@@ -289,7 +289,7 @@ sig_method_1(_) ->
 
 
 ok(#httpd{mochi_req=MochiReq}, Body) ->
-    {ok, MochiReq:respond({200, [], Body})}.
+    {ok, mochiweb_request:respond({200, [], Body}, MochiReq)}.
 
 
 oauth_credentials_info(Token, ConsumerKey) ->

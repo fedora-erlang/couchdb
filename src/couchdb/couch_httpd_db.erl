@@ -466,7 +466,7 @@ db_req(#httpd{path_parts=[_,<<"_revs_limit">>]}=Req, _Db) ->
 % as slashes in document IDs must otherwise be URL encoded.
 db_req(#httpd{method='GET',mochi_req=MochiReq, path_parts=[DbName,<<"_design/",_/binary>>|_]}=Req, _Db) ->
     PathFront = "/" ++ couch_httpd:quote(binary_to_list(DbName)) ++ "/",
-    [_|PathTail] = re:split(MochiReq:get(raw_path), "_design%2F",
+    [_|PathTail] = re:split(mochiweb_request:get(raw_path, MochiReq), "_design%2F",
         [{return, list}]),
     couch_httpd:send_redirect(Req, PathFront ++ "_design/" ++
         mochiweb_util:join(PathTail, "_design%2F"));
@@ -531,7 +531,7 @@ db_doc_req(#httpd{method = 'GET', mochi_req = MochiReq} = Req, Db, DocId) ->
         send_doc(Req, Doc, Options);
     _ ->
         {ok, Results} = couch_db:open_doc_revs(Db, DocId, Revs, Options),
-        case MochiReq:accepts_content_type("multipart/mixed") of
+        case mochiweb_request:accepts_content_type("multipart/mixed", MochiReq) of
         false ->
             {ok, Resp} = start_json_response(Req, 200),
             send_chunk(Resp, "["),
@@ -650,7 +650,7 @@ send_doc_efficiently(#httpd{mochi_req = MochiReq} = Req,
     #doc{atts = Atts} = Doc, Headers, Options) ->
     case lists:member(attachments, Options) of
     true ->
-        case MochiReq:accepts_content_type("multipart/related") of
+        case mochiweb_request:accepts_content_type("multipart/related", MochiReq) of
         false ->
             send_json(Req, 200, Headers, couch_doc:to_json_obj(Doc, Options));
         true ->
@@ -923,7 +923,7 @@ db_attachment_req(#httpd{method='GET',mochi_req=MochiReq}=Req, Db, DocId, FileNa
                     AttFun(Att, fun(Seg, _) -> send_chunk(Resp, Seg) end, {ok, Resp}),
                     last_chunk(Resp);
                 _ ->
-                    Ranges = parse_ranges(MochiReq:get(range), Len),
+                    Ranges = parse_ranges(mochiweb_request:get(range, MochiReq), Len),
                     case {Enc, Ranges} of
                         {identity, [{From, To}]} ->
                             Headers1 = [{"Content-Range", make_content_range(From, To, Len)}]
@@ -991,7 +991,7 @@ db_attachment_req(#httpd{method=Method,mochi_req=MochiReq}=Req, Db, DocId, FileN
                                  end,
                         case Expect of
                             "100-continue" ->
-                                MochiReq:start_raw_response({100, gb_trees:empty()});
+                                mochiweb_request:start_raw_response({100, gb_trees:empty()}, MochiReq);
                             _Else ->
                                 ok
                         end,

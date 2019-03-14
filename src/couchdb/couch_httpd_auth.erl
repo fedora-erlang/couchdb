@@ -160,7 +160,7 @@ proxy_auth_user(Req) ->
 
 
 cookie_authentication_handler(#httpd{mochi_req=MochiReq}=Req) ->
-    case MochiReq:get_cookie_value("AuthSession") of
+    case mochiweb_request:get_cookie_value("AuthSession", MochiReq) of
     undefined -> Req;
     [] -> Req;
     Cookie ->
@@ -250,8 +250,8 @@ ensure_cookie_auth_secret() ->
 % session handlers
 % Login handler with user db
 handle_session_req(#httpd{method='POST', mochi_req=MochiReq}=Req) ->
-    ReqBody = MochiReq:recv_body(),
-    Form = case MochiReq:get_primary_header_value("content-type") of
+    ReqBody = mochiweb_request:recv_body(MochiReq),
+    Form = case mochiweb_request:get_primary_header_value("content-type", MochiReq) of
         % content type should be json
         "application/x-www-form-urlencoded" ++ _ ->
             mochiweb_util:parse_qs(ReqBody);
@@ -401,7 +401,7 @@ make_cookie_time() ->
 
 cookie_scheme(#httpd{mochi_req=MochiReq}) ->
     [{http_only, true}] ++
-    case MochiReq:get(scheme) of
+    case mochiweb_request:get(scheme, MochiReq) of
         http -> [];
         https -> [{secure, true}]
     end.

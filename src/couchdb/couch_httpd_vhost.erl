@@ -95,7 +95,7 @@ dispatch_host(MochiReq) ->
         vhosts = VHosts,
         vhosts_fun=Fun} = get_state(),
 
-    {"/" ++ VPath, Query, Fragment} = mochiweb_util:urlsplit_path(MochiReq:get(raw_path)),
+    {"/" ++ VPath, Query, Fragment} = mochiweb_util:urlsplit_path(mochiweb_request:get(raw_path, MochiReq)),
     VPathParts =  string:tokens(VPath, "/"),
 
     VHost = host(MochiReq),
@@ -110,11 +110,11 @@ dispatch_host(MochiReq) ->
                 _Else ->
                     NewPath1 = mochiweb_util:urlunsplit_path({NewPath, Query,
                                           Fragment}),
-                    MochiReq1 = mochiweb_request:new(MochiReq:get(socket),
-                                      MochiReq:get(method),
+                    MochiReq1 = mochiweb_request:new(mochiweb_request:get(socket, MochiReq),
+                                      mochiweb_request:get(method, MochiReq),
                                       NewPath1,
-                                      MochiReq:get(version),
-                                      MochiReq:get(headers)),
+                                      mochiweb_request:get(version, MochiReq),
+                                      mochiweb_request:get(headers, MochiReq)),
                     Fun(MochiReq1, VhostTarget)
             end
     end,
@@ -127,29 +127,29 @@ append_path(Target, Path) ->
 
 % default redirect vhost handler
 redirect_to_vhost(MochiReq, VhostTarget) ->
-    Path = MochiReq:get(raw_path),
+    Path = mochiweb_request:get(raw_path, MochiReq),
     Target = append_path(VhostTarget, Path),
 
     ?LOG_DEBUG("Vhost Target: '~p'~n", [Target]),
 
     Headers = mochiweb_headers:enter("x-couchdb-vhost-path", Path,
-        MochiReq:get(headers)),
+        mochiweb_request:get(headers, MochiReq)),
 
     % build a new mochiweb request
-    MochiReq1 = mochiweb_request:new(MochiReq:get(socket),
-                                      MochiReq:get(method),
+    MochiReq1 = mochiweb_request:new(mochiweb_request:get(socket, MochiReq),
+                                      mochiweb_request:get(method, MochiReq),
                                       Target,
-                                      MochiReq:get(version),
+                                      mochiweb_request:get(version, MochiReq),
                                       Headers),
     % cleanup, It force mochiweb to reparse raw uri.
-    MochiReq1:cleanup(),
+    mochiweb_request:cleanup(MochiReq1),
     MochiReq1.
 
 %% if so, then it will not be rewritten, but will run as a normal couchdb request.
 %* normally you'd use this for _uuids _utils and a few of the others you want to
 %% keep available on vhosts. You can also use it to make databases 'global'.
 vhost_global( VhostGlobals, MochiReq) ->
-    RawUri = MochiReq:get(raw_path),
+    RawUri = mochiweb_request:get(raw_path, MochiReq),
     {"/" ++ Path, _, _} = mochiweb_util:urlsplit_path(RawUri),
 
     Front = case couch_httpd:partition(Path) of
@@ -239,9 +239,9 @@ bind_path(_, _) ->
 host(MochiReq) ->
     XHost = couch_config:get("httpd", "x_forwarded_host",
                              "X-Forwarded-Host"),
-    case MochiReq:get_header_value(XHost) of
+    case mochiweb_request:get_header_value(XHost, MochiReq) of
         undefined ->
-            case MochiReq:get_header_value("Host") of
+            case mochiweb_request:get_header_value("Host", MochiReq) of
                 undefined -> [];
                 Value1 -> Value1
             end;

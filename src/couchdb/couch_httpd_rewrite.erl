@@ -174,20 +174,20 @@ handle_rewrite_req(#httpd{
             % requested path. We use default so chained rewriting
             % wont replace the original header.
             Headers = mochiweb_headers:default("x-couchdb-requested-path",
-                                             MochiReq:get(raw_path),
-                                             MochiReq:get(headers)),
+                                             mochiweb_request:get(raw_path, MochiReq),
+                                             mochiweb_request:get(headers, MochiReq)),
 
             ?LOG_DEBUG("rewrite to ~p ~n", [RawPath1]),
 
             % build a new mochiweb request
-            MochiReq1 = mochiweb_request:new(MochiReq:get(socket),
-                                             MochiReq:get(method),
+            MochiReq1 = mochiweb_request:new(mochiweb_request:get(socket, MochiReq),
+                                             mochiweb_request:get(method, MochiReq),
                                              RawPath1,
-                                             MochiReq:get(version),
+                                             mochiweb_request:get(version, MochiReq),
                                              Headers),
 
             % cleanup, It force mochiweb to reparse raw uri.
-            MochiReq1:cleanup(),
+            mochiweb_request:cleanup(MochiReq1),
 
             #httpd{
                 db_url_handlers = DbUrlHandlers,

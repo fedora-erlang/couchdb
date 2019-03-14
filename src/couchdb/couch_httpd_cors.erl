@@ -65,7 +65,7 @@ is_preflight_request(#httpd{mochi_req=MochiReq}=Req, true) ->
 
 
 preflight_request(MochiReq) ->
-    Origin = MochiReq:get_header_value("Origin"),
+    Origin = mochiweb_request:get_header_value("Origin", MochiReq),
     preflight_request(MochiReq, Origin).
 
 preflight_request(MochiReq, undefined) ->
@@ -128,7 +128,7 @@ handle_preflight_request(Origin, Host, MochiReq) ->
         {"Access-Control-Allow-Methods",
             string:join(SupportedMethods, ", ")}]),
 
-    case MochiReq:get_header_value("Access-Control-Request-Method") of
+    case mochiweb_request:get_header_value("Access-Control-Request-Method", MochiReq) of
     undefined ->
         % If there is no Access-Control-Request-Method header
         % or if parsing failed, do not set any additional headers
@@ -140,8 +140,8 @@ handle_preflight_request(Origin, Host, MochiReq) ->
         case lists:member(Method, SupportedMethods) of
         true ->
             % method ok , check headers
-            AccessHeaders = MochiReq:get_header_value(
-                    "Access-Control-Request-Headers"),
+            AccessHeaders = mochiweb_request:get_header_value(
+                    "Access-Control-Request-Headers", MochiReq),
             {FinalReqHeaders, ReqHeaders} = case AccessHeaders of
                 undefined -> {"", []};
                 Headers ->
@@ -178,7 +178,7 @@ send_preflight_response(#httpd{mochi_req=MochiReq}=Req, Headers) ->
     Headers1 = couch_httpd:http_1_0_keep_alive(MochiReq, Headers),
     Headers2 = Headers1 ++ couch_httpd:server_header() ++
                couch_httpd_auth:cookie_auth_header(Req, Headers1),
-    {ok, MochiReq:respond({204, Headers2, <<>>})}.
+    {ok, mochiweb_request:respond({204, Headers2, <<>>}, MochiReq)}.
 
 
 % cors_headers/1
@@ -191,7 +191,7 @@ cors_headers(MochiReq, RequestHeaders) ->
 do_cors_headers(#httpd{mochi_req=MochiReq}, true) ->
     Host = couch_httpd_vhost:host(MochiReq),
     AcceptedOrigins = get_accepted_origins(Host),
-    case MochiReq:get_header_value("Origin") of
+    case mochiweb_request:get_header_value("Origin", MochiReq) of
     undefined ->
         % If the Origin header is not present terminate
         % this set of steps. The request is outside the scope

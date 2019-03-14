@@ -99,10 +99,10 @@ http_proxy_test_() ->
 
 should_proxy_basic_request(_) ->
     Remote = fun(Req) ->
-        'GET' = Req:get(method),
-        "/" = Req:get(path),
-        0 = Req:get(body_length),
-        <<>> = Req:recv_body(),
+        'GET' = mochiweb_request:get(method, Req),
+        "/" = mochiweb_request:get(path, Req),
+        0 = mochiweb_request:get(body_length, Req),
+        <<>> = mochiweb_request:recv_body(Req),
         {ok, {200, [{"Content-Type", "text/plain"}], "ok"}}
     end,
     Local = fun
@@ -115,7 +115,7 @@ should_proxy_basic_request(_) ->
 
 should_return_alternative_status(_) ->
     Remote = fun(Req) ->
-        "/alternate_status" = Req:get(path),
+        "/alternate_status" = mochiweb_request:get(path, Req),
         {ok, {201, [], "ok"}}
     end,
     Local = fun
@@ -129,7 +129,7 @@ should_return_alternative_status(_) ->
 
 should_respect_trailing_slash(_) ->
     Remote = fun(Req) ->
-        "/trailing_slash/" = Req:get(path),
+        "/trailing_slash/" = mochiweb_request:get(path, Req),
         {ok, {200, [], "ok"}}
     end,
     Local = fun
@@ -143,8 +143,8 @@ should_respect_trailing_slash(_) ->
 
 should_proxy_headers(_) ->
     Remote = fun(Req) ->
-        "/passes_header" = Req:get(path),
-        "plankton" = Req:get_header_value("X-CouchDB-Ralph"),
+        "/passes_header" = mochiweb_request:get(path, Req),
+        "plankton" = mochiweb_request:get_header_value("X-CouchDB-Ralph", Req),
         {ok, {200, [], "ok"}}
     end,
     Local = fun
@@ -161,8 +161,8 @@ should_proxy_headers(_) ->
 
 should_proxy_host_header(_) ->
     Remote = fun(Req) ->
-        "/passes_host_header" = Req:get(path),
-        "www.google.com" = Req:get_header_value("Host"),
+        "/passes_host_header" = mochiweb_request:get(path, Req),
+        "www.google.com" = mochiweb_request:get_header_value("Host", Req),
         {ok, {200, [], "ok"}}
     end,
     Local = fun
@@ -179,7 +179,7 @@ should_proxy_host_header(_) ->
 
 should_pass_headers_back(_) ->
     Remote = fun(Req) ->
-        "/passes_header_back" = Req:get(path),
+        "/passes_header_back" = mochiweb_request:get(path, Req),
         {ok, {200, [{"X-CouchDB-Plankton", "ralph"}], "ok"}}
     end,
     Local = fun
@@ -193,8 +193,8 @@ should_pass_headers_back(_) ->
 
 should_use_same_protocol_version(_) ->
     Remote = fun(Req) ->
-        "/uses_same_version" = Req:get(path),
-        {1, 0} = Req:get(version),
+        "/uses_same_version" = mochiweb_request:get(path, Req),
+        {1, 0} = mochiweb_request:get(version, Req),
         {ok, {200, [], "ok"}}
     end,
     Local = fun
@@ -211,9 +211,9 @@ should_use_same_protocol_version(_) ->
 
 should_proxy_body(_) ->
     Remote = fun(Req) ->
-        'PUT' = Req:get(method),
-        "/passes_body" = Req:get(path),
-        <<"Hooray!">> = Req:recv_body(),
+        'PUT' = mochiweb_request:get(method, Req),
+        "/passes_body" = mochiweb_request:get(path, Req),
+        <<"Hooray!">> = mochiweb_request:recv_body(Req),
         {ok, {201, [], "ok"}}
     end,
     Local = fun
@@ -232,8 +232,8 @@ should_proxy_body(_) ->
 should_proxy_body_back(_) ->
     BodyChunks = [<<"foo">>, <<"bar">>, <<"bazinga">>],
     Remote = fun(Req) ->
-        'GET' = Req:get(method),
-        "/passes_eof_body" = Req:get(path),
+        'GET' = mochiweb_request:get(method, Req),
+        "/passes_eof_body" = mochiweb_request:get(path, Req),
         {raw, {200, [{"Connection", "close"}], BodyChunks}}
     end,
     Local = fun
@@ -248,8 +248,8 @@ should_proxy_body_back(_) ->
 should_proxy_chunked_body(_) ->
     BodyChunks = [<<"foo">>, <<"bar">>, <<"bazinga">>],
     Remote = fun(Req) ->
-        'POST' = Req:get(method),
-        "/passes_chunked_body" = Req:get(path),
+        'POST' = mochiweb_request:get(method, Req),
+        "/passes_chunked_body" = mochiweb_request:get(path, Req),
         RecvBody = fun
             ({Length, Chunk}, [Chunk | Rest]) ->
                 Length = size(Chunk),
@@ -257,7 +257,7 @@ should_proxy_chunked_body(_) ->
             ({0, []}, []) ->
                 ok
         end,
-        ok = Req:stream_body(1024 * 1024, RecvBody, BodyChunks),
+        ok = mochiweb_request:stream_body(1024 * 1024, RecvBody, BodyChunks, Req),
         {ok, {201, [], "ok"}}
     end,
     Local = fun
@@ -277,8 +277,8 @@ should_proxy_chunked_body(_) ->
 should_proxy_chunked_body_back(_) ->
     ?_test(begin
         Remote = fun(Req) ->
-            'GET' = Req:get(method),
-            "/passes_chunked_body_back" = Req:get(path),
+            'GET' = mochiweb_request:get(method, Req),
+            "/passes_chunked_body_back" = mochiweb_request:get(path, Req),
             BodyChunks = [<<"foo">>, <<"bar">>, <<"bazinga">>],
             {chunked, {200, [{"Transfer-Encoding", "chunked"}], BodyChunks}}
         end,
@@ -368,7 +368,7 @@ do_rewrite_tests(Tests) ->
 
 should_rewrite_header(Header, Location, Url) ->
     Remote = fun(Req) ->
-        "/rewrite_test" = Req:get(path),
+        "/rewrite_test" = mochiweb_request:get(path, Req),
         {ok, {302, [{Header, Location}], "ok"}}
     end,
     Local = fun
