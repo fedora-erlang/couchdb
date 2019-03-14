@@ -32,10 +32,9 @@
     end).
 -define(tempdb,
     fun() ->
-            Nums = tuple_to_list(erlang:timestamp()),
-            Prefix = "eunit-test-db",
-            Suffix = lists:concat([integer_to_list(Num) || Num <- Nums]),
-            list_to_binary(Prefix ++ "-" ++ Suffix)
+            Prefix = <<"eunit-test-db">>,
+            Suffix = couch_uuids:random(),
+            <<Prefix/binary, "-", Suffix/binary>>
     end).
 -define(docid,
     fun() ->
